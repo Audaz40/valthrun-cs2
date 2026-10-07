@@ -99,7 +99,9 @@ The `SubscriberClient` TypeScript class was rewritten:
 
 - All workspace crates now have `authors = ["Aurora Team"]`,
   descriptions that mention Aurora, and cleaned-up `Cargo.toml`s.
-- Workspace version set to `1.0.0-aurora`.
+- Workspace version bumped to `1.0.0` and all internal path deps no longer
+  pin hardcoded `0.5.x` versions (so the workspace resolves cleanly
+  regardless of which version is in `[workspace.package]`).
 
 ---
 

@@ -2,6 +2,8 @@
 name = "controller"
 version.workspace = true
 edition.workspace = true
+authors = ["Aurora Team"]
+description = "Aurora controller — ties the overlay, CS2 reader and enhancements together (Windows-only)."
 
 [dependencies]
 anyhow = { workspace = true }

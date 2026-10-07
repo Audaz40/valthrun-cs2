@@ -2,6 +2,8 @@
 name = "cs2"
 version.workspace = true
 edition.workspace = true
+authors = ["Aurora Team"]
+description = "Aurora CS2 memory-access / state crate (Windows-only, read-only)."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,6 +23,6 @@ nalgebra = { workspace = true }
 raw_struct = { workspace = true }
 env_logger = { workspace = true }
 serde = { version = "1.0.228", features = ["derive"] }
-cs2-schema-provider = { version = "0.5.15", path = "../cs2-schema/provider" }
+cs2-schema-provider = { path = "../cs2-schema/provider" }
 sha1 = "0.10.6"
 hex = "0.4.3"

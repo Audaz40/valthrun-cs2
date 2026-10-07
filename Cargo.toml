@@ -21,7 +21,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.0-aurora"
+version = "1.0.0"
 edition = "2021"
 authors = ["Aurora Team"]
 description = "Aurora — open-source external CS2 read-only kernel radar/overlay (dark-red edition)"

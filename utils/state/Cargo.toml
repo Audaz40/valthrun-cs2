@@ -1,7 +1,9 @@
 [package]
 name = "utils-state"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors = ["Aurora Team"]
+description = "Shared typed state registry used across Aurora components."
 
 [dependencies]
 anyhow = { workspace = true }
