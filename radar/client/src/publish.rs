@@ -100,7 +100,12 @@ impl WebRadarPublisher {
     }
 
     fn send_message(&self, message: C2SMessage) {
-        let _ = self.transport_tx.try_send(message);
+        // Use try_send to avoid blocking the tick loop on a slow transport.
+        // If the queue is full we drop — state updates are frequent and a
+        // missed tick is better than backing up indefinitely.
+        if let Err(mpsc::error::TrySendError::Closed(_)) = self.transport_tx.try_send(message) {
+            log::debug!("Outbound transport closed; messages will no longer be sent.");
+        }
     }
 
     pub async fn close_connection(self) {

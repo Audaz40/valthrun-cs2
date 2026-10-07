@@ -1,72 +1,112 @@
-![Valthrun CS2 Logo](./img/logo.svg)
+![Aurora Logo](./img/logo.svg)
+
 <p align="right">
 <a href="https://discord.gg/ecKbpAPW5T">
 <img src="https://discordapp.com/api/guilds/1135362291311849693/widget.png?style=shield">
 </a>
 </p>
 
-Valthrun is an open source external Counter-Strike 2 read only kernel-level gameplay enhancer.  
-That's a lot of descriptive words, but what does each of them mean?  
-- `Valthrun` The name of this project
-- `open source` This application is open source and for everyone to learn from
-- `external` We do not inject any DLLs into the target process
-- `read only` We do not write to the CS2 process in any way, therefore being impossible to detect by scanning the process memory
-- `kernel` We do not use any user level WinAPIs in order to get information from the CS2 process
-  
-This project is mainly a fun example for exploring the Windows Kernel with [Rust](https://www.rust-lang.org) and exploring the world of game enhancements :)
+# AURORA — Tactical Radar System
 
-# WARNING
-Valthrun is **not** a plug 'n play solution.  
-Instead Valthrun aims to achieve maximum stealth and stay invisible for other applications.  
-Please read [How to use](https://wiki.valth.run/getting-started/) carefully and try troubleshooting issues on your own.  
+**Aurora** is a next-generation open-source external Counter-Strike 2 read-only kernel-level gameplay enhancer, reborn with a signature **crimson dark-red interface** and refined visual experience.
 
-  
-# Features
-Due to Valthrun being read-only (as of now), there are limitations on what features are possible to implement (eg. skin changer).
-Regardless of this limitation, Valthrun supports the following features:  
+- `Aurora` — dawn red light; the new name and face of this project
+- `open source` — every component is auditable and here for you to learn from
+- `external` — zero DLL injection into the target process
+- `read-only` — absolutely no writes to CS2 process memory, maximising stealth
+- `kernel-level` — bypasses user-mode WinAPIs to retrieve game state directly
 
-- External radar  
-  Publish your game for everybody on https://radar.valth.run
-- Player ESP  
-  ESP with a lot of configuration possibilities like: `Skeleton`, `Boxes3D` and `Boxes2D` 
-  - Configurable colors to distinguish between enemy and team players
-  - ESP includes player health, a health bar, weapon and a lot more
-- Bomb Info
-  - Time until the bomb detonation
-  - Defuser info such as a defuse timer
-  - Bomb site where the bomb is located
-- Trigger Bot  
-  Shoot your enemy (or team mates) as soon they enter your crosshair
-- Spectator info
-  - List of player currently watching you / the observer target
-- Stream proof by default  
-  Never show your Valthrun overlay on any screen shares
+This project is both a serious engineering exploration of the Windows kernel in [Rust](https://www.rust-lang.org) and a polished tactical radar you can actually use.
 
-To access Valthruns settings overlay press `PAUSE`.
+---
 
-## Planned Features
+## ⚠️ WARNING
+
+Aurora is **not** a plug-and-play cheat. It is built for stealth, which means setup takes a few deliberate steps. Please read the [Getting Started guide](https://wiki.valth.run/getting-started/) carefully and troubleshoot on your own before asking for help.
+
+---
+
+## ✨ Features
+
+Because Aurora is read-only, skin changers and memory-writing cheats are out of scope. The feature set is tuned for competitive awareness:
+
+- **🔴 External Radar**
+  Broadcast your match to teammates on your own radar web page — no client needed for viewers.
+- **🎯 Player ESP**
+  Skeletons, 3D boxes, 2D boxes — fully configurable colours for enemies vs teammates, health bars, weapon names, and more.
+- **💣 Bomb Info**
+  Live detonation timer, defuse timer, and bomb-site indicator, all in the signature crimson glow.
+- **🎮 Trigger Bot**
+  Automatic fire when a target enters your crosshair.
+- **👁️ Spectator List**
+  See who is spectating you and who your observer target is.
+- **🎥 Stream-Proof by Default**
+  The overlay never appears in screen captures or streaming software.
+
+Press `PAUSE` to open the in-overlay settings panel.
+
+---
+
+## 🎨 The Aurora Look
+
+Aurora ships with a hand-crafted dark-red theme out of the box:
+
+- Deep crimson backgrounds (`#0a0000` → `#8b0000`) with radial aurora glow
+- Glowing red accent (`#ff1744`) on all interactive elements
+- Monochromatic team highlights (icy blue for CT, crimson for T, glowing red for you)
+- Frosted-glass panels with red-tinted borders and soft shadows
+- Subtle grid overlay + pulsing aurora ambience on the landing page
+
+Planned:
 - Aimbot
-- Player competitive ranks / wins
+- Competitive rank / win stats
+- Additional Aurora-exclusive visual themes
 
-# How to use / Getting started
-Please follow this guide to get started:  
-https://wiki.valth.run/getting-started/
+---
 
-# Troubleshooting
-If you are having issues mapping the kernel driver or starting the controller, please take a look [here](https://wiki.valth.run/category/troubleshooting):  
-https://wiki.valth.run/category/troubleshooting
-  
-The issue you encounter is most likely covered. If you still have any questions or need assistance, feel free to checkout the official Valthrun Discord server ([click to join](https://discord.gg/ecKbpAPW5T)).
+## 🚀 Getting Started
 
-# VAC
-The same considerations as mentioned in [this link](https://github.com/dretax/GarHal_CSGO#starting-driver) have been taken into account.  
-With these precautions and some minor improvements, such as omitting the Valthrun identifier and using xor encryption for strings, the driver/overlay should avoid VAC detection. However, I must clarify that I haven't extensively studied VAC, so my conclusion is speculative. Personally, I have been using a C based driver/overlay like this with CSGO for several years without ever getting VAC banned. But be aware of overwatch!  
-With VAC live being enabled now, use this with caution. As always take the necessary precautions into consideration.
+Follow the official guide at:
+<https://wiki.valth.run/getting-started/>
 
-# Screenshots
+To build the radar web UI locally:
+
+```bash
+cd radar/web
+yarn install
+yarn start:dev    # dev server with hot reload
+yarn build        # production build
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+If the driver won't map or the controller won't start, check the [Troubleshooting section](https://wiki.valth.run/category/troubleshooting) of the wiki first. Most issues are documented there. For anything else, the Discord linked at the top of this README is the fastest way to get help.
+
+---
+
+## 🛡️ VAC
+
+The same precautions described in [this write-up](https://github.com/dretax/GarHal_CSGO#starting-driver) have been adopted (with improvements of our own), including obfuscated identifiers and xor-encrypted strings to make detection more difficult. That said, no public tool is 100% undetectable. The original author has used a similar C-based driver/overlay for CS:GO for years without a VAC ban — but overwatch is still a real risk. Use at your own discretion.
+
+---
+
+## 📸 Screenshots
+
 ![](./img/showcase_01.png)
 ![](./img/showcase_02.png)
 
-# Help
-You can find help on the official Valthrun Discord server:  
+---
+
+## 💬 Help
+
+Join the official Discord for support and updates:
+
 [![Discord Shield](https://discordapp.com/api/guilds/1135362291311849693/widget.png?style=shield)](https://discord.gg/ecKbpAPW5T)
+
+---
+
+<p align="center">
+<sub><i>Aurora — Precision Vision, Red Theme Edition.</i></sub>
+</p>

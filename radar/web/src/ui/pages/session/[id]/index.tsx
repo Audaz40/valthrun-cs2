@@ -1,15 +1,15 @@
-import { Settings as IconSettings } from "@mui/icons-material";
-import { Alert, Box, CircularProgress, IconButton, Typography } from "@mui/material";
+import { Settings as IconSettings, Logout as IconLogout } from "@mui/icons-material";
+import { Alert, Box, CircularProgress, IconButton, Typography, Tooltip } from "@mui/material";
 import * as React from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { kDefaultRadarState } from "../../../../backend/connection";
-import { RadarState } from "../../../../backend/definitions";
 import { useAppDispatch } from "../../../../state";
 import { updateRadarSettings } from "../../../../state/radar-settings";
 import { SubscriberClientProvider, useSubscriberClient } from "../../../components/connection";
 import ModalSettings from "./modal-settings";
 import { RadarRenderer } from "./radar";
 import { useDocumentFocusState } from "../../../components/container/document-focus-state";
+import LogoAurora from "../../../../assets/aurora-logo.svg";
 
 const kServerUrl: string | null = process.env.SERVER_URL;
 const getEndpointUrl = () => {
@@ -45,10 +45,10 @@ export default React.memo(() => {
             sx={{
                 height: "100%",
                 width: "100%",
-
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
+                position: "relative",
             }}
         >
             <SubscriberClientProvider address={targetUrl}>
@@ -59,10 +59,47 @@ export default React.memo(() => {
                 <ClientStateDisconnected />
                 <ModalSettings />
             </SubscriberClientProvider>
-            <Box sx={{ position: "absolute", top: 0, right: 0, pt: 2, pr: 2 }}>
+
+            {/* Aurora branding watermark */}
+            <Box sx={{ position: "absolute", top: 12, left: 16, display: "flex", alignItems: "center", gap: 1.2, zIndex: 1, pointerEvents: "none", opacity: 0.85 }}>
+                <Box component={LogoAurora} sx={{ width: 28, height: 28, filter: "drop-shadow(0 0 8px rgba(255,23,68,0.6))" }} />
+                <Typography sx={{
+                    fontWeight: 700,
+                    letterSpacing: 3,
+                    fontSize: "0.9rem",
+                    color: "#ff5252",
+                    textTransform: "uppercase",
+                    textShadow: "0 0 10px rgba(255,23,68,0.5)",
+                }}>
+                    Aurora
+                </Typography>
+            </Box>
+
+            <Box sx={{ position: "absolute", top: 8, right: 12, display: "flex", gap: 0.5, zIndex: 2 }}>
+                <ButtonBackToMenu />
                 <ButtonToggleSettings />
             </Box>
         </Box>
+    );
+});
+
+const ButtonBackToMenu = React.memo(() => {
+    const navigate = useNavigate();
+    const hasFocus = useDocumentFocusState();
+    return (
+        <Tooltip title="Back to menu">
+            <IconButton
+                onClick={() => navigate("/")}
+                sx={{
+                    opacity: hasFocus ? 1 : 0.25,
+                    transition: ".15s ease-in-out",
+                    border: "1px solid rgba(255, 23, 68, 0.15)",
+                    borderRadius: 1.5,
+                }}
+            >
+                <IconLogout />
+            </IconButton>
+        </Tooltip>
     );
 });
 
@@ -70,9 +107,20 @@ const ButtonToggleSettings = React.memo(() => {
     const dispatch = useAppDispatch();
     const hasFocus = useDocumentFocusState();
     return (
-        <IconButton onClick={() => dispatch(updateRadarSettings({ dialogOpen: true }))} sx={{ zIndex: 1, opacity: hasFocus ? 1 : 0, transition: ".1s ease-in-out" }}>
-            <IconSettings />
-        </IconButton>
+        <Tooltip title="Settings">
+            <IconButton
+                onClick={() => dispatch(updateRadarSettings({ dialogOpen: true }))}
+                sx={{
+                    zIndex: 1,
+                    opacity: hasFocus ? 1 : 0.25,
+                    transition: ".15s ease-in-out",
+                    border: "1px solid rgba(255, 23, 68, 0.15)",
+                    borderRadius: 1.5,
+                }}
+            >
+                <IconSettings />
+            </IconButton>
+        </Tooltip>
     );
 });
 
@@ -114,9 +162,18 @@ const ClientStateConnecting = React.memo(() => {
     }
 
     return (
-        <Box sx={{ alignSelf: "center" }}>
-            <CircularProgress />
-            <Typography>Connecting</Typography>
+        <Box sx={{
+            alignSelf: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            p: 4,
+        }}>
+            <CircularProgress size={48} sx={{ color: "#ff1744" }} />
+            <Typography sx={{ color: "#ffcdd2", letterSpacing: 2, textTransform: "uppercase", fontSize: "0.85rem" }}>
+                Establishing Link
+            </Typography>
         </Box>
     );
 });
@@ -128,22 +185,80 @@ const ClientStateFailed = React.memo(() => {
     }
 
     return (
-        <Box sx={{ alignSelf: "center" }}>
-            <Typography>Connection Error</Typography>
-            <Typography>{state.reason}</Typography>
+        <Box sx={{
+            alignSelf: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 1.5,
+            p: 4,
+            border: "1px solid rgba(255, 23, 68, 0.3)",
+            borderRadius: 2,
+            background: "rgba(40, 10, 10, 0.8)",
+            backdropFilter: "blur(8px)",
+            maxWidth: "28em",
+        }}>
+            <Typography variant="h6" sx={{ color: "#ff5252", letterSpacing: 2, textTransform: "uppercase" }}>
+                Connection Failed
+            </Typography>
+            <Typography sx={{ color: "#b08080", textAlign: "center", fontSize: "0.9rem" }}>
+                {state.reason}
+            </Typography>
         </Box>
     );
 });
 
 const ClientStateDisconnected = React.memo(() => {
     const state = useSubscriberClientState();
+    const navigate = useNavigate();
     if (state.state !== "disconnected") {
         return;
     }
 
     return (
-        <Box sx={{ alignSelf: "center" }}>
-            <Typography>Session has been closed</Typography>
+        <Box sx={{
+            alignSelf: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            p: 4,
+            border: "1px solid rgba(255, 23, 68, 0.25)",
+            borderRadius: 2,
+            background: "rgba(40, 10, 10, 0.8)",
+            backdropFilter: "blur(8px)",
+        }}>
+            <Typography variant="h6" sx={{ color: "#ff5252", letterSpacing: 2, textTransform: "uppercase" }}>
+                Session Closed
+            </Typography>
+            <Typography sx={{ color: "#b08080", fontSize: "0.9rem" }}>
+                The broadcaster has ended the session.
+            </Typography>
+            <Box
+                component="button"
+                onClick={() => navigate("/")}
+                sx={{
+                    mt: 1,
+                    px: 3,
+                    py: 1,
+                    background: "linear-gradient(135deg, #8b0000, #d32f2f)",
+                    border: "none",
+                    borderRadius: 1,
+                    color: "#fff",
+                    fontWeight: 600,
+                    letterSpacing: 1,
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    textTransform: "uppercase",
+                    boxShadow: "0 0 20px rgba(255, 23, 68, 0.25)",
+                    "&:hover": {
+                        background: "linear-gradient(135deg, #d32f2f, #ff1744)",
+                        boxShadow: "0 0 28px rgba(255, 23, 68, 0.5)",
+                    },
+                }}
+            >
+                Return to Menu
+            </Box>
         </Box>
     );
 });
@@ -151,6 +266,15 @@ const ClientStateDisconnected = React.memo(() => {
 const ClientStateConnected = React.memo(() => {
     const client = useSubscriberClient();
     const state = useSubscriberClientState();
+    const [viewerCount, setViewerCount] = React.useState(0);
+
+    React.useEffect(() => {
+        const onViewers = (v: number) => setViewerCount(v);
+        client.events.on("view.count", onViewers);
+        return () => {
+            client.events.off("view.count", onViewers);
+        };
+    }, [client]);
 
     if (state.state !== "connected") {
         return;
@@ -167,7 +291,7 @@ const ClientStateConnected = React.memo(() => {
                 justifyContent: "center",
             }}
         >
-            <RadarRenderer />
+            <RadarRenderer viewerCount={viewerCount} />
         </Box>
     );
 });

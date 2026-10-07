@@ -60,11 +60,12 @@ export const useCurrentMap = () => {
     return useQueryMap(worldName).data ?? null;
 }
 
-const MapTitle = React.memo(() => {
+const MapTitle = React.memo((props: { viewerCount?: number }) => {
     const worldName = useRadarState(
         React.useCallback(state => state.worldName, [])
     );
     const queryMap = useQueryMap(worldName);
+    const { viewerCount = 0 } = props;
 
     const hideMapTitle = useAppSelector(state => state.radarSettings.hideMapTitle);
     if (hideMapTitle) {
@@ -72,11 +73,62 @@ const MapTitle = React.memo(() => {
     }
 
     return (
-        <Typography variant={"h5"}>{queryMap.data?.displayName ?? worldName}</Typography>
+        <Box sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            pt: 1,
+        }}>
+            <Typography
+                variant={"h5"}
+                sx={{
+                    color: "#ffcdd2",
+                    fontWeight: 700,
+                    letterSpacing: 4,
+                    textTransform: "uppercase",
+                    fontSize: "1.1rem",
+                    textShadow: "0 0 16px rgba(255, 23, 68, 0.4)",
+                }}
+            >
+                {queryMap.data?.displayName ?? worldName}
+            </Typography>
+            {viewerCount > 0 && (
+                <Box sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.6,
+                    px: 1.2,
+                    py: 0.3,
+                    borderRadius: 2,
+                    border: "1px solid rgba(255, 23, 68, 0.3)",
+                    background: "rgba(139, 0, 0, 0.35)",
+                    backdropFilter: "blur(6px)",
+                    fontSize: "0.75rem",
+                    color: "#ffcdd2",
+                    letterSpacing: 1,
+                    fontWeight: 600,
+                }}>
+                    <Box
+                        component="span"
+                        sx={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "#ff1744",
+                            boxShadow: "0 0 8px #ff1744",
+                            animation: "aurora-pulse 1.5s ease-in-out infinite",
+                        }}
+                    />
+                    {viewerCount} {viewerCount === 1 ? "viewer" : "viewers"}
+                </Box>
+            )}
+        </Box>
     );
 });
 
-export const RadarRenderer = React.memo(() => {
+export const RadarRenderer = React.memo((props: { viewerCount?: number }) => {
+    const { viewerCount = 0 } = props;
     const client = useSubscriberClient();
     const worldName = useRadarState(React.useCallback(state => state.worldName, []));
     const queryMap = useQueryMap(worldName);
@@ -101,7 +153,7 @@ export const RadarRenderer = React.memo(() => {
                 p: padding,
             }}
         >
-            <MapTitle />
+            <MapTitle viewerCount={viewerCount} />
             <Box
                 sx={{
                     height: "100%",
@@ -135,56 +187,74 @@ export const RadarRenderer = React.memo(() => {
                     queryMap.data ? (
                         <MapContainer renderStatistics={renderStatistics} />
                     ) : (
-                        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                            <Typography variant={"h5"} sx={{ alignSelf: "center", color: "error.dark" }}>
+                        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 1 }}>
+                            <Typography variant={"h5"} sx={{ color: "#ff5252", letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>
                                 Map Unknown
+                            </Typography>
+                            <Typography variant={"body2"} sx={{ color: "#b08080", fontSize: "0.85rem" }}>
+                                Could not resolve the current map layout.
                             </Typography>
                         </Box>
                     )
                 )}
                 {isInMatch && (queryMap.isLoading || queryMap.isError) && (
-                    <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 1 }}>
                         {queryMap.isLoading ? (
-                            <Typography variant={"h5"} sx={{ alignSelf: "center", color: "grey.500" }}>
-                                loading map info
+                            <Typography variant={"h6"} sx={{ color: "#b08080", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500 }}>
+                                Loading Map
                             </Typography>
                         ) : (
-                            <Typography variant={"h5"} sx={{ alignSelf: "center", color: "palette.error.dark" }}>
-                                <React.Fragment>
-                                    Failed to load map.<br />
-                                    Lookup the console for more details.
-                                </React.Fragment>
-                            </Typography>
+                            <>
+                                <Typography variant={"h6"} sx={{ color: "#ff5252", letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>
+                                    Failed to load map
+                                </Typography>
+                                <Typography variant={"body2"} sx={{ color: "#b08080", fontSize: "0.85rem" }}>
+                                    Check the browser console for more details.
+                                </Typography>
+                            </>
                         )}
                     </Box>
                 )}
                 {!isInMatch && (
-                    <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                        <Typography variant={"h5"} sx={{ alignSelf: "center", color: "grey.500" }}>
-                            waiting for match
+                    <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2 }}>
+                        <Box sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: "50%",
+                            border: "2px solid rgba(255,23,68,0.25)",
+                            borderTopColor: "#ff1744",
+                            animation: "aurora-spin 1.2s linear infinite",
+                            "@keyframes aurora-spin": {
+                                "0%": { transform: "rotate(0deg)" },
+                                "100%": { transform: "rotate(360deg)" },
+                            },
+                        }} />
+                        <Typography variant={"h6"} sx={{ color: "#b08080", letterSpacing: 3, textTransform: "uppercase", fontWeight: 500 }}>
+                            Awaiting Match
                         </Typography>
                     </Box>
                 )}
                 {displayStatistics && (
                     <Box sx={{
                         position: "absolute",
-                        top: 0,
-                        left: 0,
-
+                        top: 52,
+                        left: 8,
                         display: "flex",
                         flexDirection: "column",
-
                         zIndex: 1,
-                        backgroundColor: "rgba(0, 0, 0, .6)",
-                        p: 2,
-
+                        backgroundColor: "rgba(14, 3, 3, .78)",
+                        border: "1px solid rgba(255, 23, 68, 0.25)",
+                        backdropFilter: "blur(8px)",
+                        borderRadius: 1,
+                        p: 1.5,
                         minHeight: "1em",
                         width: "18em",
+                        boxShadow: "0 0 18px rgba(139,0,0,0.35)",
                     }}>
-                        <Typography>Updates:</Typography>
+                        <Typography sx={{ color: "#ff5252", fontWeight: 600, letterSpacing: 1.5, fontSize: "0.75rem", textTransform: "uppercase", mb: 0.5 }}>Network</Typography>
                         <DisplayStatistics statistics={client.stateUpdateStatistics} />
 
-                        <Typography sx={{ mt: 1 }}>Renderer:</Typography>
+                        <Typography sx={{ mt: 1, color: "#ff5252", fontWeight: 600, letterSpacing: 1.5, fontSize: "0.75rem", textTransform: "uppercase", mb: 0.5 }}>Renderer</Typography>
                         <DisplayStatistics statistics={renderStatistics} />
                     </Box>
                 )}
@@ -427,7 +497,7 @@ const MapLevel = React.memo((props: { level: string, overlap?: number }) => {
                 width: "100%",
 
                 ".icon_player_svg__view-cone": {
-                    fill: "#fff",
+                    fill: "rgba(255, 23, 68, 0.55)",
                 },
                 ".team-t": {
                     ".icon_player_svg__player-dot, .icon_player_dead_svg__player_cross": {
@@ -536,7 +606,7 @@ export const MapIconPawn = (props: MapIconPawnProps) => {
                 left: `calc(var(--pawn-${pawnId}-left) * ${mapWidth / 100}px - ${iconWidth / 2}px)`,
                 rotate: `var(--pawn-${pawnId}-rotate)`,
 
-                filter: "drop-shadow(-2px -2px 3px rgba(0, 0, 0, .5))",
+                filter: "drop-shadow(-2px -2px 3px rgba(0, 0, 0, .7)) drop-shadow(0 0 4px rgba(255, 23, 68, 0.25))",
             }}
             width={iconWidth}
             className={`animated team-${team} ${isBroadcaster ? "broadcaster" : ""}`}
@@ -613,8 +683,12 @@ const DisplayStatistics = React.memo((props: { statistics: UpdateStatistics }) =
     const maxTime = history.reduce((max, current) => Math.max(max, current), history[0]);
     return (
         <React.Fragment>
-            <Typography>Update time: {average.toFixed(0)}ms ({Math.round(1000 / average)} ups)</Typography>
-            <Typography>Max time: {maxTime.toFixed(0)}ms</Typography>
+            <Typography sx={{ color: "#f5e0e0", fontSize: "0.82rem", fontFamily: "'Roboto Mono', monospace" }}>
+                Update: {average.toFixed(0)}ms ({Math.round(1000 / average)} ups)
+            </Typography>
+            <Typography sx={{ color: "#b08080", fontSize: "0.8rem", fontFamily: "'Roboto Mono', monospace" }}>
+                Max: {maxTime.toFixed(0)}ms
+            </Typography>
         </React.Fragment>
     )
 });

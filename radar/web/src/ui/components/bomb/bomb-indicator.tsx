@@ -14,21 +14,21 @@ const StateBackground = (props: { state: PlantedC4State }) => {
         case "active":
             if (state.defuser !== null) {
                 progress = (state.defuser.timeTotal - state.defuser.timeRemaining) / state.defuser.timeTotal;
-                background = colors.blue[900];
+                background = "linear-gradient(90deg, #1a237e, #4fc3f7)";
             } else {
                 progress = (state.timeTotal - state.timeDetonation) / state.timeTotal;
-                background = colors.red[900];
+                background = "linear-gradient(90deg, #8b0000, #ff1744)";
             }
             break;
 
         case "defused":
             progress = 1;
-            background = colors.blue[900];
+            background = "linear-gradient(90deg, #1b5e20, #66bb6a)";
             break;
 
         case "detonated":
             progress = 1;
-            background = colors.red[900];
+            background = "linear-gradient(90deg, #8b0000, #ff1744)";
             break;
 
         default:
@@ -46,6 +46,9 @@ const StateBackground = (props: { state: PlantedC4State }) => {
                 bottom: 0,
 
                 background,
+                boxShadow: state.state === "active" && state.defuser === null
+                    ? "0 0 16px rgba(255, 23, 68, 0.55) inset"
+                    : "none",
             }}
             width={`${(progress * 100).toFixed(0)}%`}
         />
@@ -70,6 +73,7 @@ export default React.memo((props: { state: PlantedC4State }) => {
 
     let text, textColor;
     let Icon;
+    let glow;
     switch (state.state) {
         case "active":
             if (state.defuser !== null) {
@@ -77,27 +81,29 @@ export default React.memo((props: { state: PlantedC4State }) => {
                 Icon = IconDefuse;
 
                 if (state.defuser.timeRemaining < state.timeDetonation) {
-                    textColor = colors.green[700];
+                    textColor = colors.green[400];
                 } else {
-                    textColor = colors.red[700];
+                    textColor = "#ff5252";
                 }
             } else {
                 text = formatTime(state.timeDetonation);
                 Icon = IconC4;
-                textColor = "#FFFFFF";
+                textColor = "#ffffff";
+                glow = "0 0 20px rgba(255, 23, 68, 0.6)";
             }
             break;
 
         case "defused":
             text = "defused";
             Icon = IconDefuse;
-            textColor = colors.green[700];
+            textColor = colors.green[400];
             break;
 
         case "detonated":
             text = "detonated";
             Icon = IconC4;
-            textColor = "#FFFFFF";
+            textColor = "#ffffff";
+            glow = "0 0 20px rgba(255, 23, 68, 0.6)";
             break;
     }
 
@@ -105,37 +111,45 @@ export default React.memo((props: { state: PlantedC4State }) => {
         <Paper
             variant="outlined"
             sx={{
-                width: "12em",
-                height: "3em",
-
+                width: "14em",
+                height: "3.2em",
                 position: "relative",
                 overflow: "hidden",
                 opacity: bombDetailsOpacity,
+                borderColor: "rgba(255, 23, 68, 0.4) !important",
+                boxShadow: glow || "0 0 12px rgba(139,0,0,0.3)",
+                backdropFilter: "blur(8px)",
             }}
         >
             <Box
                 sx={{
                     position: "absolute",
                     zIndex: 2,
-
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
-
                     display: "flex",
                     flexDirection: "row",
-
-                    paddingLeft: 1,
-                    paddingRight: 1,
-
+                    paddingLeft: 1.2,
+                    paddingRight: 1.2,
                     "> *": {
                         alignSelf: "center",
                     },
                 }}
             >
-                <Icon width="2em" height="2em" fill={textColor} />
-                <Typography variant="h6" sx={{ marginLeft: "auto", marginRight: "auto", color: textColor }}>
+                <Icon width="2em" height="2em" fill={textColor as string} />
+                <Typography
+                    variant="h6"
+                    sx={{
+                        marginLeft: "auto",
+                        marginRight: "auto",
+                        color: textColor,
+                        fontWeight: 600,
+                        letterSpacing: 1,
+                        fontFamily: "'Roboto Mono', monospace",
+                    }}
+                >
                     {text}
                 </Typography>
             </Box>

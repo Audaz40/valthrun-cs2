@@ -183,13 +183,13 @@ impl SettingsUI {
         unicode_text: &UnicodeTextRenderer,
     ) {
         let content_font = ui.current_font().id();
-        let _title_font = if let Some(font_id) = app.fonts.valthrun.font_id() {
+        let _title_font = if let Some(font_id) = app.fonts.aurora.font_id() {
             ui.push_font(font_id)
         } else {
             return;
         };
 
-        ui.window(obfstr!("Valthrun"))
+        ui.window(obfstr!("Aurora"))
             .size([650.0, 300.0], Condition::FirstUseEver)
             .size_constraints([650.0, 300.0], [2000.0, 2000.0])
             .title_bar(false)
@@ -220,8 +220,8 @@ impl SettingsUI {
                     if let Some(_tab) = ui.tab_item("Information") {
                         let build_info = app.app_state.resolve::<StateBuildInfo>(()).ok();
 
-                        ui.text(obfstr!("Valthrun an open source CS2 external read only kernel gameplay enhancer."));
-                        ui.text(&format!("{} Version {} ({})", obfstr!("Valthrun"), VERSION, env!("BUILD_TIME")));
+                        ui.text(obfstr!("Aurora an open source CS2 external read only kernel gameplay enhancer."));
+                        ui.text(&format!("{} Version {} ({})", obfstr!("Aurora"), VERSION, env!("BUILD_TIME")));
                         ui.text(&format!("{} Version {} ({})", obfstr!("CS2"), build_info.as_ref().map_or("error", |info| &info.revision), build_info.as_ref().map_or("error", |info| &info.build_datetime)));
 
                         let ydummy = ui.window_size()[1] - ui.cursor_pos()[1] - ui.text_line_height_with_spacing() * 2.0 - 12.0;
@@ -349,13 +349,13 @@ impl SettingsUI {
                     }
 
                     if let Some(_) = ui.tab_item("Web Radar") {
-                        ui.text(obfstr!("The Valthrun Web Radar has been moved into an own application which runs outside of the Valthrun CS2 overlay."));
+                        ui.text(obfstr!("The Aurora Web Radar has been moved into an own application which runs outside of the Aurora CS2 overlay."));
                         ui.text(obfstr!("More information on how to run the CS2 web radar can be found here:"));
                         ui.text(obfstr!("https://wiki.valth.run/link/6"));
                     }
 
                     if let Some(_) = ui.tab_item("Misc") {
-                        ui.checkbox(obfstr!("Valthrun Watermark"), &mut settings.valthrun_watermark);
+                        ui.checkbox(obfstr!("Aurora Watermark"), &mut settings.aurora_watermark);
 
                         if ui.checkbox(obfstr!("Hide overlay from screen capture"), &mut settings.hide_overlay_from_screen_capture) {
                             app.settings_screen_capture_changed.store(true, Ordering::Relaxed);
@@ -1777,7 +1777,7 @@ impl SettingsUI {
                         Box::new(move || {
                             // GrenadeHelperTransferState
                             let Some(target_path) = rfd::FileDialog::new()
-                                .add_filter("Valthrun Grenade Spots", &["vgs"])
+                                .add_filter("Aurora Grenade Spots", &["vgs"])
                                 .save_file()
                             else {
                                 return Ok(GrenadeHelperTransferState::Idle);
@@ -1799,7 +1799,7 @@ impl SettingsUI {
                         Box::new(move || {
                             // GrenadeHelperTransferState
                             let Some(target_path) = rfd::FileDialog::new()
-                                .add_filter("Valthrun Grenade Spots", &["vgs"])
+                                .add_filter("Aurora Grenade Spots", &["vgs"])
                                 .pick_file()
                             else {
                                 return Ok(GrenadeHelperTransferState::Idle);

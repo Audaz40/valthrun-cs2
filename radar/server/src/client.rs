@@ -1,36 +1,25 @@
-use std::{
-    net::SocketAddr,
-    sync::Weak,
-};
+use std::net::SocketAddr;
+use std::sync::Weak;
 
 use anyhow::Context;
-use futures::{
-    SinkExt,
-    StreamExt,
-};
+use futures::{SinkExt, StreamExt};
 use radar_shared::protocol::{
-    ClientEvent,
-    HandshakeMessage,
-    HandshakeProtocolV1,
-    HandshakeProtocolV2,
-    S2CMessage,
+    ClientEvent, HandshakeMessage, HandshakeProtocolV1, HandshakeProtocolV2, S2CMessage,
     RADAR_PROTOCOL_VERSION,
 };
-use tokio::sync::{
-    mpsc::{
-        self,
-        Sender,
-    },
-    RwLock,
-};
-use warp::filters::ws::{
-    Message,
-    WebSocket,
-};
+use tokio::sync::mpsc::{self, Sender};
+use tokio::sync::RwLock;
+use warp::filters::ws::{Message, WebSocket};
 
 use crate::RadarServer;
 
 pub type ClientId = u32;
+
+/// Size of the per-client outbound message queue. If the queue backs up
+/// beyond this, messages are dropped (slow-consumer protection).
+const OUTBOUND_QUEUE_CAPACITY: usize = 64;
+/// Size of the per-client inbound message queue.
+const INBOUND_QUEUE_CAPACITY: usize = 64;
 
 #[derive(Clone)]
 pub enum ClientState {
@@ -53,14 +42,21 @@ impl PubClient {
         Self {
             client_id: 0,
             address,
-
             state: ClientState::Uninitialized,
             tx,
         }
     }
 
-    pub fn send_command(&self, command: S2CMessage) {
-        let _ = self.tx.try_send(command);
+    /// Non-blocking send. Returns Err if the queue is full or closed.
+    pub fn try_send_command(&self, command: S2CMessage) -> Result<(), mpsc::error::TrySendError<S2CMessage>> {
+        self.tx.try_send(command)
+    }
+
+    /// Graceful close: send a disconnect message, then drop the channel.
+    pub async fn shutdown(&self, reason: &str) {
+        let _ = self.tx.send(S2CMessage::ResponseError {
+            error: reason.to_string(),
+        }).await;
     }
 
     async fn process_protocol_handshake(socket: &mut WebSocket) -> anyhow::Result<()> {
@@ -73,34 +69,30 @@ impl PubClient {
                 let _ = socket
                     .send(Message::text(serde_json::to_string(
                         &HandshakeProtocolV1::ResponseError {
-                            error: format!("Outdated client. Please update."),
+                            error: "Aurora requires protocol v2 — please update your client.".into(),
                         },
                     )?))
                     .await;
-
-                anyhow::bail!("unsupported v1 client")
+                anyhow::bail!("unsupported v1 client");
             }
             HandshakeMessage::V2(message) => {
                 let HandshakeProtocolV2::RequestInitialize { client_version } = message else {
-                    log::debug!(
-                        "Received client with outdated version ({}). Disconnecting client.",
-                        1
-                    );
+                    log::debug!("Client sent non-initialize handshake message; disconnecting.");
                     let _ = socket
                         .send(Message::text(serde_json::to_string(
                             &HandshakeProtocolV2::ResponseGenericFailure {
-                                message: format!("invalid request"),
+                                message: "invalid handshake sequence".into(),
                             },
                         )?))
                         .await;
-
-                    anyhow::bail!("invalid message")
+                    anyhow::bail!("invalid handshake message");
                 };
 
                 if client_version != RADAR_PROTOCOL_VERSION {
                     log::debug!(
-                        "Received client with outdated version ({}). Disconnecting client.",
-                        client_version
+                        "Client version {} unsupported (server expects {}). Disconnecting.",
+                        client_version,
+                        RADAR_PROTOCOL_VERSION
                     );
                     let _ = socket
                         .send(Message::text(serde_json::to_string(
@@ -109,20 +101,23 @@ impl PubClient {
                             },
                         )?))
                         .await;
-
-                    anyhow::bail!("client version {} unsupported", client_version)
+                    anyhow::bail!(
+                        "client protocol version {} incompatible with server {}",
+                        client_version,
+                        RADAR_PROTOCOL_VERSION
+                    );
                 }
 
-                let _ = socket
+                socket
                     .send(Message::text(serde_json::to_string(
                         &HandshakeProtocolV2::ResponseSuccess {
                             server_version: RADAR_PROTOCOL_VERSION,
+                            server_name: Some("Aurora".into()),
                         },
                     )?))
-                    .await;
+                    .await?;
             }
         }
-
         Ok(())
     }
 
@@ -131,118 +126,116 @@ impl PubClient {
         client_address: SocketAddr,
         mut socket: WebSocket,
     ) {
-        match Self::process_protocol_handshake(&mut socket).await {
-            Ok(_) => {}
-            Err(err) => {
-                log::debug!(
-                    "Failed to process client protocol handshake: {}: Closing connection.",
-                    err
+        if let Err(err) = Self::process_protocol_handshake(&mut socket).await {
+            log::debug!(
+                "Handshake failed for {}: {:#}; closing connection.",
+                client_address,
+                err
+            );
+            let _ = socket.flush().await;
+            let _ = socket.close().await;
+            return;
+        }
+
+        let (message_tx, mut message_tx_rx) = mpsc::channel(OUTBOUND_QUEUE_CAPACITY);
+        let (message_rx_tx, message_rx) = mpsc::channel(INBOUND_QUEUE_CAPACITY);
+
+        let server = match server.upgrade() {
+            Some(s) => s,
+            None => {
+                log::warn!(
+                    "Accepted ws client from {}, but server is gone. Dropping.",
+                    client_address
                 );
-                let _ = socket.flush().await;
                 return;
             }
-        }
+        };
 
-        let (message_tx, mut message_tx_rx) = mpsc::channel(16);
-        let (message_rx_tx, message_rx) = mpsc::channel(16);
+        let client_fut = {
+            let mut srv = server.write().await;
+            srv.register_client(PubClient::new(message_tx, client_address), message_rx).await
+        };
+        let client_task = tokio::spawn(client_fut);
 
-        {
-            let server = match server.upgrade() {
-                Some(server) => server,
-                None => {
-                    log::warn!(
-                        "Accepted ws client from {}, but server gone. Dropping client.",
-                        client_address
-                    );
-                    return;
-                }
-            };
+        // Split the socket into read/write halves.
+        let (mut tx, mut rx) = socket.split();
 
-            let mut server = server.write().await;
-            let client_fut = server
-                .register_client(
-                    PubClient::new(message_tx, client_address.clone()),
-                    message_rx,
-                )
-                .await;
+        // Reader task: parses incoming text frames and dispatches to the
+        // server's command handler via the inbound channel.
+        let reader_jh = tokio::spawn({
+            let inbound = message_rx_tx.clone();
+            async move {
+                while let Some(frame) = rx.next().await {
+                    let frame = match frame {
+                        Ok(f) => f,
+                        Err(err) => {
+                            let _ = inbound.send(ClientEvent::RecvError(err.into())).await;
+                            break;
+                        }
+                    };
 
-            tokio::spawn(client_fut);
-        }
+                    if !frame.is_text() {
+                        // Ignore binary/pong/close frames silently; warp
+                        // handles ping/pong for us.
+                        continue;
+                    }
 
-        {
-            let (mut tx, mut rx) = socket.split();
-
-            let rx_loop = tokio::spawn({
-                let message_rx_tx = message_rx_tx.clone();
-                async move {
-                    while let Some(message) = rx.next().await {
-                        let message = match message {
-                            Ok(message) => message,
-                            Err(err) => {
-                                let _ =
-                                    message_rx_tx.send(ClientEvent::RecvError(err.into())).await;
+                    let body = frame.as_bytes();
+                    match serde_json::from_slice::<radar_shared::protocol::C2SMessage>(body) {
+                        Ok(msg) => {
+                            if inbound.send(ClientEvent::RecvMessage(msg)).await.is_err() {
+                                // Channel closed → handler exited.
                                 break;
-                            }
-                        };
-
-                        if message.is_text() {
-                            let message = match serde_json::from_slice(message.as_bytes()) {
-                                Ok(message) => message,
-                                Err(err) => {
-                                    log::trace!(
-                                        "Unparsable message ({}): {}",
-                                        err,
-                                        String::from_utf8_lossy(message.as_bytes())
-                                    );
-                                    let _ = message_rx_tx
-                                        .send(ClientEvent::RecvError(err.into()))
-                                        .await;
-                                    break;
-                                }
-                            };
-
-                            if let Err(err) =
-                                { message_rx_tx.send(ClientEvent::RecvMessage(message)).await }
-                            {
-                                log::warn!("Failed to submit message to queue: {}", err);
                             }
                         }
-                    }
-                }
-            });
-
-            let tx_loop = tokio::spawn({
-                let message_rx_tx = message_rx_tx.clone();
-                async move {
-                    while let Some(message) = message_tx_rx.recv().await {
-                        let encoded = match serde_json::to_string(&message) {
-                            Ok(message) => message,
-                            Err(err) => {
-                                let _ =
-                                    message_rx_tx.send(ClientEvent::SendError(err.into())).await;
-                                break;
-                            }
-                        };
-
-                        if let Err(err) = tx.send(Message::text(encoded)).await {
-                            let _ = message_rx_tx.send(ClientEvent::SendError(err.into())).await;
+                        Err(err) => {
+                            log::trace!(
+                                "Unparsable frame from client ({}): {:#}; payload[0..128]={:?}",
+                                client_address,
+                                err,
+                                String::from_utf8_lossy(
+                                    &body[..body.len().min(128)]
+                                )
+                            );
+                            let _ = inbound.send(ClientEvent::RecvError(err.into())).await;
                             break;
                         }
                     }
                 }
-            });
-
-            /* await until ether the read or write loop has finished */
-            tokio::select! {
-                _ = rx_loop => {},
-                _ = tx_loop => {},
             }
+        });
 
-            let _ = message_rx_tx
-                .send(ClientEvent::RecvError(anyhow::anyhow!(
-                    "client disconnected"
-                )))
-                .await;
+        // Writer task: serializes outbound messages and sends them down the wire.
+        let writer_jh = tokio::spawn({
+            let inbound = message_rx_tx.clone();
+            async move {
+                while let Some(message) = message_tx_rx.recv().await {
+                    let payload = match serde_json::to_string(&message) {
+                        Ok(p) => p,
+                        Err(err) => {
+                            let _ = inbound.send(ClientEvent::SendError(err.into())).await;
+                            break;
+                        }
+                    };
+                    if let Err(err) = tx.send(Message::text(payload)).await {
+                        let _ = inbound.send(ClientEvent::SendError(err.into())).await;
+                        break;
+                    }
+                }
+            }
+        });
+
+        // When either half exits, signal the command handler and wait for cleanup.
+        tokio::select! {
+            _ = reader_jh => {},
+            _ = writer_jh => {},
+            _ = client_task => {},
         }
+
+        // Notify the command handler loop (if it hasn't exited yet) so it
+        // can perform cleanup/unregistration.
+        let _ = message_rx_tx
+            .send(ClientEvent::RecvError(anyhow::anyhow!("websocket closed")))
+            .await;
     }
 }

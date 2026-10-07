@@ -2,6 +2,8 @@
 name = "radar-client"
 version.workspace = true
 edition.workspace = true
+authors = ["Aurora Team"]
+description = "Aurora radar WebSocket publisher client (in-game CS2 state → Aurora server)."
 
 [dependencies]
 anyhow = { workspace = true }

@@ -30,8 +30,20 @@ export default React.memo(() => {
     const [currentTab, setCurrentTab] = useState(0);
 
     return (
-        <Dialog open={isOpen} onClose={() => dispatch(updateRadarSettings({ dialogOpen: false }))}>
-            <DialogTitle>Settings</DialogTitle>
+        <Dialog
+            open={isOpen}
+            onClose={() => dispatch(updateRadarSettings({ dialogOpen: false }))}
+            PaperProps={{
+                sx: {
+                    borderRadius: 2,
+                    backgroundImage: "linear-gradient(180deg, rgba(60,12,12,0.97), rgba(14,3,3,0.98)) !important",
+                },
+            }}
+        >
+            <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 22, height: 22, borderRadius: "50%", background: "radial-gradient(circle, #ff1744, #8b0000)", boxShadow: "0 0 12px rgba(255,23,68,0.6)" }} />
+                Aurora Settings
+            </DialogTitle>
             <DialogContent
                 sx={{
                     minWidth: "15em",
@@ -86,8 +98,14 @@ export default React.memo(() => {
                 </TabPanel>
 
             </DialogContent>
-            <DialogActions>
-                <Button onClick={() => dispatch(updateRadarSettings({ dialogOpen: false }))}>Close</Button>
+            <DialogActions sx={{ borderTop: "1px solid rgba(255,23,68,0.15)", p: 2 }}>
+                <Button
+                    onClick={() => dispatch(updateRadarSettings({ dialogOpen: false }))}
+                    variant="contained"
+                    sx={{ px: 3 }}
+                >
+                    Close
+                </Button>
             </DialogActions>
         </Dialog>
     );

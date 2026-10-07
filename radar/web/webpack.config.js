@@ -84,8 +84,9 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            title: "Valthrun Radar",
-            favicon: path.resolve(__dirname, "src", "assets", "favicon.ico"),
+            title: "Aurora — Tactical Radar",
+            template: path.resolve(__dirname, "src", "index.html"),
+            inject: "body",
         }),
         new webpack.DefinePlugin({
             "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),

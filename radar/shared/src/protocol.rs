@@ -1,24 +1,23 @@
-use serde::{
-    Deserialize,
-    Serialize,
-};
+use serde::{Deserialize, Serialize};
 use typescript_type_def::TypeDef;
 
 use crate::RadarState;
 
-pub const RADAR_PROTOCOL_VERSION: u32 = 2;
+/// Protocol version — bump when making incompatible wire changes.
+pub const RADAR_PROTOCOL_VERSION: u32 = 3;
+/// Human-readable server identification sent in log messages / logs.
+pub const AURORA_SERVER_NAME: &str = "Aurora";
 
 #[derive(Serialize, Deserialize, Clone, Debug, TypeDef)]
 pub enum SubscribeResult {
     Success,
     SessionDoesNotExists,
-    // SessionRequiresPassword,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, TypeDef)]
 #[serde(rename_all = "kebab-case", tag = "type", content = "payload")]
 pub enum S2CMessage {
-    // Generic responses
+    // ---- Generic responses ----
     ResponseSuccess {},
     ResponseError {
         error: String,
@@ -32,12 +31,9 @@ pub enum S2CMessage {
     ResponseSubscribeSuccess {},
     ResponseSessionInvalidId {},
 
-    NotifyRadarState {
-        state: RadarState,
-    },
-    NotifyViewCount {
-        viewers: usize,
-    },
+    // ---- Server-initiated notifications ----
+    NotifyRadarState { state: RadarState },
+    NotifyViewCount { viewers: usize },
     NotifySessionClosed {},
 }
 
@@ -48,40 +44,30 @@ pub enum C2SMessage {
         #[serde(default)]
         session_auth_token: Option<String>,
     },
-    InitializeSubscribe {
-        session_id: String,
-    },
+    InitializeSubscribe { session_id: String },
 
-    NotifyRadarState {
-        state: RadarState,
-    },
+    NotifyRadarState { state: RadarState },
 
-    Disconnect {
-        reason: String,
-    },
+    Disconnect { reason: String },
 }
 
+/// Event funneled from the transport layer up to the command handler.
 pub enum ClientEvent<T> {
     RecvMessage(T),
     RecvError(anyhow::Error),
     SendError(anyhow::Error),
 }
 
+/* ---------- Protocol V1 (legacy, rejected) ---------- */
+
 #[derive(Serialize, Deserialize, TypeDef)]
 pub enum HandshakeProtocolV1 {
-    /*
-     * Protocol version 1
-     * This protocol does not has an explicit protocol handshake.
-     * Instead the version is transmitted in the initialize functions.
-     */
     InitializePublish { version: u32 },
     InitializeSubscribe { version: u32 },
-
-    /*
-     * We only need the error response, as we do not support protocol v1 any more
-     */
     ResponseError { error: String },
 }
+
+/* ---------- Protocol V2/V3 handshake ---------- */
 
 #[derive(Serialize, Deserialize, TypeDef)]
 #[serde(
@@ -93,7 +79,11 @@ pub enum HandshakeProtocolV1 {
 pub enum HandshakeProtocolV2 {
     RequestInitialize { client_version: u32 },
 
-    ResponseSuccess { server_version: u32 },
+    ResponseSuccess {
+        server_version: u32,
+        #[serde(default)]
+        server_name: Option<String>,
+    },
     ResponseIncompatible { supported_versions: Vec<u32> },
     ResponseGenericFailure { message: String },
 }

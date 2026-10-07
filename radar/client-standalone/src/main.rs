@@ -28,7 +28,7 @@ use utils_state::StateRegistry;
 
 mod arch;
 
-/// Standalone Valthrun CS2 radar
+/// Standalone Aurora CS2 radar
 #[derive(Parser, Debug)]
 #[command(long_about = None)]
 struct Args {
@@ -149,9 +149,11 @@ async fn radar_publish_loop(
         let _ = radar_url.set_scheme("http");
     }
 
-    log::info!("Radar session {}", radar_client.session_id);
-    log::info!("Available at {}", radar_url);
-    log::info!("Press CTRL+C to exit");
+    log::info!("================================================");
+    log::info!("  AURORA radar session #{}", radar_client.session_id);
+    log::info!("  Viewer URL: {}", radar_url);
+    log::info!("  Press CTRL+C to exit");
+    log::info!("================================================");
 
     loop {
         tokio::select! {

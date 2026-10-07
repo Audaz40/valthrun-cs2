@@ -2,6 +2,8 @@
 name = "radar-shared"
 version.workspace = true
 edition.workspace = true
+authors = ["Aurora Team"]
+description = "Shared Aurora radar protocol types (client/server) and TypeScript bindings."
 
 [dependencies]
 anyhow = { workspace = true }
