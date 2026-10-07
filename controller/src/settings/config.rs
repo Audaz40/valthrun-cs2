@@ -236,7 +236,7 @@ pub struct AppSettings {
     pub spectators_list: bool,
 
     #[serde(default = "bool_true")]
-    pub valthrun_watermark: bool,
+    pub aurora_watermark: bool,
 
     #[serde(default = "default_i32::<16364>")]
     pub mouse_x_360: i32,

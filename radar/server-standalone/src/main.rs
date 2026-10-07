@@ -11,7 +11,7 @@ use radar_server::{
 };
 use tokio::signal;
 
-/// Standalone Valthrun CS2 radar
+/// Standalone Aurora CS2 radar
 #[derive(Parser, Debug)]
 #[command(long_about = None)]
 struct Args {

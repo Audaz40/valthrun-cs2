@@ -33,7 +33,7 @@ export type RadarSettingsState = {
 
 export const kDefaultRadarSettings: RadarSettingsState = {
     dialogOpen: false,
-    iconSize: 3.0,
+    iconSize: 3.2,
     displayBombDetails: true,
     bombDetailsOpacity: 1.0,
     showAllLayers: true,
@@ -48,9 +48,10 @@ export const kDefaultRadarSettings: RadarSettingsState = {
     mapMarginRight: 0,
     mapMarginBottom: 0,
 
-    colorDotCT: "#0007ff",
-    colorDotT: "#ffc933",
-    colorDotOwn: "#e91e63",
+    /* Aurora dark-red palette: CT as icy blue for contrast, T as crimson, broadcaster (you) as glowing red accent */
+    colorDotCT: "#4fc3f7",
+    colorDotT: "#e53935",
+    colorDotOwn: "#ff1744",
 
     showDotOwn: true,
     disablePadding: false,

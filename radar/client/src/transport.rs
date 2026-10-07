@@ -95,8 +95,13 @@ pub async fn create_ws_transport(
     let socket = create_ws_socket(&url).await?;
     let (mut socket_tx, mut socket_rx) = socket.split();
 
-    let (channel_rx_tx, channel_rx) = mpsc::channel(16);
-    let (channel_tx, mut channel_tx_rx) = mpsc::channel(16);
+    // Per-client channels:
+    //   - outbound (`channel_tx`): publisher/command messages to server (small)
+    //   - inbound (`channel_rx_tx`): server messages/events to client (burst-able)
+    const OUTBOUND_CAP: usize = 64;
+    const INBOUND_CAP: usize = 256;
+    let (channel_rx_tx, channel_rx) = mpsc::channel(INBOUND_CAP);
+    let (channel_tx, mut channel_tx_rx) = mpsc::channel(OUTBOUND_CAP);
     tokio::spawn({
         let channel_rx_tx = channel_rx_tx.clone();
         async move {

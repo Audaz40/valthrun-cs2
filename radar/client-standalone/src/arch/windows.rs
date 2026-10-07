@@ -46,6 +46,6 @@ pub fn show_critical_error(message: &str) {
     }
 
     if !is_console_invoked() {
-        self::show_error_message(obfstr!("Valthrun Radar Client"), message);
+        self::show_error_message(obfstr!("Aurora Radar Client"), message);
     }
 }

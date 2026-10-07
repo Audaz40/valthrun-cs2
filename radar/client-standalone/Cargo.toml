@@ -2,6 +2,8 @@
 name = "radar-client-standalone"
 version.workspace = true
 edition.workspace = true
+authors = ["Aurora Team"]
+description = "Standalone Aurora radar publisher — reads CS2 state and pushes it to an Aurora server."
 
 [dependencies]
 anyhow = { workspace = true }

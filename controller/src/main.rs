@@ -147,7 +147,7 @@ impl FontReference {
 
 #[derive(Clone, Default)]
 pub struct AppFonts {
-    valthrun: FontReference,
+    aurora: FontReference,
 }
 
 pub struct Application {
@@ -326,7 +326,7 @@ impl Application {
             .position_pivot([0.5, 0.5])
             .build(|| {
                 ui.text("We detected you pressed the \"INSERT\" key.");
-                ui.text("If you meant to open the Valthrun Overlay please use the \"PAUSE\" key.");
+                ui.text("If you meant to open the Aurora Overlay please use the \"PAUSE\" key.");
                 ui.dummy([0.0, 2.5]);
                 ui.separator();
                 ui.dummy([0.0, 2.5]);
@@ -353,10 +353,10 @@ impl Application {
     fn render_overlay(&self, ui: &imgui::Ui, unicode_text: &UnicodeTextRenderer) {
         let settings = self.settings();
 
-        if settings.valthrun_watermark {
+        if settings.aurora_watermark {
             {
                 let text_buf;
-                let text = obfstr!(text_buf = "Valthrun Overlay");
+                let text = obfstr!(text_buf = "Aurora Overlay");
 
                 ui.set_cursor_pos([
                     ui.window_size()[0] - ui.calc_text_size(text)[0] - 10.0,
@@ -422,7 +422,7 @@ fn main() {
 }
 
 #[derive(Debug, Parser)]
-#[clap(name = "Valthrun", version)]
+#[clap(name = "Aurora", version)]
 struct AppArgs {
     /// Enable verbose logging ($env:RUST_LOG="trace")
     #[clap(short, long)]
@@ -438,7 +438,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
     let build_info = version_info()?;
     log::info!(
         "{} v{} ({}). Windows build {}.",
-        obfstr!("Valthrun"),
+        obfstr!("Aurora"),
         env!("CARGO_PKG_VERSION"),
         env!("GIT_HASH"),
         build_info.dwBuildNumber
@@ -485,7 +485,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             ]
             .join("\n");
 
-            let result = dialog::show_yes_no(obfstr!("Valthrun"), &message, false);
+            let result = dialog::show_yes_no(obfstr!("Aurora"), &message, false);
             if !result {
                 log::info!("{}", obfstr!("Aborting launch due to user input."));
                 return Ok(());
@@ -544,7 +544,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
 
             move |atlas| {
                 let font_size = 18.0;
-                let valthrun_font = atlas.add_font(&[FontSource::TtfData {
+                let aurora_font = atlas.add_font(&[FontSource::TtfData {
                     data: include_bytes!("../resources/Valthrun-Regular.ttf"),
                     size_pixels: font_size,
                     config: Some(FontConfig {
@@ -555,7 +555,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
                     }),
                 }]);
 
-                app_fonts.valthrun.set_id(valthrun_font);
+                app_fonts.aurora.set_id(aurora_font);
             }
         })),
     };

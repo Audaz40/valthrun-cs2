@@ -1,5 +1,5 @@
 {
-    "name": "valthrun-radar",
+    "name": "aurora-radar",
     "version": "1.0.0",
     "private": "true",
     "license": "MIT",
@@ -14,6 +14,7 @@
         "@mui/icons-material": "^5.14.18",
         "@mui/material": "^5.14.18",
         "@reduxjs/toolkit": "^2.2.6",
+        "ajv": "^8.20.0",
         "eventemitter2": "^6.4.9",
         "html-webpack-plugin": "^5.5.3",
         "mui-color-input": "^4.0.1",
